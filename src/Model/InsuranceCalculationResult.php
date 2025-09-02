@@ -5,7 +5,7 @@ namespace App\Model;
 class InsuranceCalculationResult
 {
 	private float $totalCostInCurrency;
-	private float $totalCostInRubles;
+	private float $totalCostInPreferredCurrency;
 	private int $daysCount;
 	private float $dailyCoefficient;
 	private float $exchangeRate;
@@ -13,14 +13,14 @@ class InsuranceCalculationResult
 
 	public function __construct(
 		float $totalCostInCurrency,
-		float $totalCostInRubles,
+		float $totalCostInPreferredCurrency,
 		int $daysCount,
 		float $dailyCoefficient,
 		float $exchangeRate,
 		int $insuranceAmount
 	) {
 		$this->totalCostInCurrency = $totalCostInCurrency;
-		$this->totalCostInRubles = $totalCostInRubles;
+		$this->totalCostInPreferredCurrency = $totalCostInPreferredCurrency;
 		$this->daysCount = $daysCount;
 		$this->dailyCoefficient = $dailyCoefficient;
 		$this->exchangeRate = $exchangeRate;
@@ -32,9 +32,9 @@ class InsuranceCalculationResult
 		return $this->totalCostInCurrency;
 	}
 
-	public function getTotalCostInRubles(): float
+	public function getTotalCostInPreferredCurrency(): float
 	{
-		return $this->totalCostInRubles;
+		return $this->totalCostInPreferredCurrency;
 	}
 
 	public function getDaysCount(): int
@@ -61,7 +61,7 @@ class InsuranceCalculationResult
 	{
 		return [
 			'totalCostInCurrency' => round($this->totalCostInCurrency, 2),
-			'totalCostInRubles' => round($this->totalCostInRubles, 2),
+			'totalCostInPreferredCurrency' => round($this->totalCostInPreferredCurrency, 2),
 			'daysCount' => $this->daysCount,
 			'dailyCoefficient' => round($this->dailyCoefficient, 2),
 			'exchangeRate' => round($this->exchangeRate, 2),
