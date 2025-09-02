@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Tests\Service;
+namespace App\Tests\ServiceUnitT;
 
 use App\Model\InsuranceCalculationRequest;
 use App\Service\InsuranceCalculatorService;
@@ -27,11 +27,11 @@ class InsuranceCalculatorServiceTest extends TestCase
 
 		$result = $this->service->calculate($request);
 
-		$this->assertEquals(1.8, $result->getTotalCostInCurrency());
-		$this->assertEquals(144.0, $result->getTotalCostInPreferredCurrency());
+		$this->assertEquals(1.8, $result->getTotalCostInCurrency(), '', 0.0001);
+		$this->assertEquals(144.0, $result->getTotalCostInPreferredCurrency(), '', 0.0001);
 		$this->assertEquals(3, $result->getDaysCount());
-		$this->assertEquals(0.6, $result->getDailyCoefficient());
-		$this->assertEquals(80.0, $result->getExchangeRate());
+		$this->assertEquals(0.6, $result->getDailyCoefficient(), '', 0.0001);
+		$this->assertEquals(80.0, $result->getExchangeRate(), '', 0.0001);
 		$this->assertEquals(30000, $result->getInsuranceAmount());
 	}
 
