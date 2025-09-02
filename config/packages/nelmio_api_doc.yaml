@@ -1,0 +1,82 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Insurance Calculator API
+            description: API для расчета стоимости страховки для выезжающих за рубеж
+            version: 1.0.7
+        components:
+            schemas:
+                InsuranceCalculationRequest:
+                    type: object
+                    required:
+                        - insuranceAmount
+                        - startDate
+                        - endDate
+                        - currencyCode
+                    properties:
+                        insuranceAmount:
+                            type: integer
+                            description: Страховая сумма
+                            example: 30000
+                            enum: [ 30000, 50000 ]
+                        startDate:
+                            type: string
+                            format: date
+                            description: Дата начала поездки (YYYY-MM-DD)
+                            example: "2025-10-01"
+                        endDate:
+                            type: string
+                            format: date
+                            description: Дата окончания поездки (YYYY-MM-DD)
+                            example: "2025-10-03"
+                        currencyCode:
+                            type: string
+                            description: Код валюты (3 символа)
+                            example: "EUR"
+                            enum: [ "EUR", "USD" ]
+
+                InsuranceCalculationResponse:
+                    type: object
+                    properties:
+                        totalCostInCurrency:
+                            type: number
+                            format: float
+                            description: Общая стоимость в валюте страхования
+                            example: 1.8
+                        totalCostInPreferredCurrency:
+                            type: number
+                            format: float
+                            description: Общая стоимость в рублях
+                            example: 144.0
+                        daysCount:
+                            type: integer
+                            description: Количество дней поездки
+                            example: 3
+                        dailyCoefficient:
+                            type: number
+                            format: float
+                            description: Коэффициент 1 дня
+                            example: 0.6
+                        exchangeRate:
+                            type: number
+                            format: float
+                            description: Курс валюты на сегодняшний день
+                            example: 80.0
+                        insuranceAmount:
+                            type: integer
+                            description: Страховая сумма
+                            example: 30000
+
+                ErrorResponse:
+                    type: object
+                    properties:
+                        error:
+                            type: string
+                            description: Сообщение об ошибке
+                        errors:
+                            type: object
+                            description: Детальные ошибки валидации
+
+        areas:
+            path_patterns:
+                - ^/api(?!/doc)
