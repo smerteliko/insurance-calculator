@@ -1,112 +1,64 @@
-name: Deploy to Production
+name: CI/CD Pipeline
 
 on:
   push:
+    branches: [ main, master ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
     branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          # Принудительно загружаем всю историю чтобы убедиться что lock file удален
-          fetch-depth: 0
+        uses: actions/checkout@v3.6.0
 
-      - name: Force remove composer.lock if exists
-        run: |
-          # Принудительно удаляем composer.lock из рабочей директории
-          if [ -f composer.lock ]; then
-            echo "🔄 Removing composer.lock from working directory"
-            rm -f composer.lock
-          fi
-          
-          # Проверяем что composer.lock не отслеживается в git
-          if git ls-files | grep -q "composer.lock"; then
-            echo "❌ composer.lock still tracked in git. Removing..."
-            git rm --cached composer.lock
-            git commit -m "Remove composer.lock from git tracking" || echo "No changes to commit"
-          fi
-
-      - name: Setup PHP
-        uses: shivammathur/sup-php@v2
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@2.28.0
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, curl, intl, json, zip
+          extensions: mbstring, xml, curl, json, zip
           tools: composer
-          coverage: none
 
       - name: Install dependencies
-        run: |
-          # Пропускаем проверку lock file и устанавливаем зависимости
-          composer install --prefer-dist --no-progress --no-interaction --ignore-platform-reqs
+        run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Create .env file
+      - name: Basic validation
         run: |
-          if [ -f .env.test ]; then
-            cp .env.test .env
-          else
-            cp .env.dist .env
-          fi
-          echo "APP_SECRET=$(openssl rand -hex 32)" >> .env
-          echo "APP_ENV=dev" >> .env
-
-      - name: Run basic health check
-        run: |
-          # Простая проверка что приложение работает
-          if [ -f "bin/console" ]; then
-            php bin/console --version || echo "Console command failed but continuing..."
-          fi
-          echo "✅ Dependencies installed successfully"
+          php -v
+          composer --version
+          echo "✅ Environment setup completed"
 
   deploy:
-    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-20.04
     needs: test
-    if: success()
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Force remove composer.lock
-        run: |
-          rm -f composer.lock
-          if git ls-files | grep -q "composer.lock"; then
-            git rm --cached composer.lock
-          fi
+        uses: actions/checkout@v3.6.0
 
       - name: Setup PHP
-        uses: shivammathur/sup-php@v2
+        uses: shivammathur/setup-php@2.28.0
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, curl, intl, json, zip
-          tools: composer
+          extensions: mbstring, xml, curl, json, zip
 
-      - name: Install production dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
-
-      - name: Create deployment package
+      - name: Build production
         run: |
-          mkdir -p deployment
-          cp -r bin config public src templates translations vendor .env composer.json symfony.lock deployment/
-          mkdir -p deployment/var/log
-          mkdir -p deployment/var/cache
-          chmod -R 755 deployment/var
-          cd deployment && zip -r ../insurance-calculator.zip .
+          composer install --no-dev --optimize-autoloader
+          echo "APP_ENV=prod" > .env
+          echo "APP_DEBUG=0" >> .env
 
-      - name: Upload deployment package
-        uses: actions/upload-artifact@v4
+      - name: Create package
+        run: |
+          zip -r build.zip . -x "*.git*" "node_modules/*" "tests/*" "var/*"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3.1.3
         with:
-          name: insurance-calculator
-          path: insurance-calculator.zip
-
-      - name: Show deployment info
-        run: |
-          echo "🚀 Symfony 7 Application is ready for deployment!"
-          echo "📦 Download the artifact: insurance-calculator.zip"
-          echo "🌐 Deploy to any PHP 8.2+ hosting"
+          name: app-build
+          path: build.zip
