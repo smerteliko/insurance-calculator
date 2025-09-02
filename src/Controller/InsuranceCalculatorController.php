@@ -23,9 +23,7 @@ class InsuranceCalculatorController extends AbstractController
 		$this->validator = $validator;
 	}
 
-	/**
-	 * @Route("/api/insurance/calculate", name="insurance_calculate", methods={"POST"})
-	 */
+	#[Route('/api/insurance/calculate', name: 'insurance_calculate', methods: ['POST'])]
 	public function calculate(Request $request): JsonResponse
 	{
 		try {
