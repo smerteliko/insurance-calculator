@@ -54,6 +54,8 @@
         }
     },
     "scripts": {
+        "api-doc:generate": "bin/console nelmio:apidoc:dump",
+        "api-doc:check": "bin/console nelmio:apidoc:check",
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
             "assets:install %PUBLIC_DIR%": "symfony-cmd"

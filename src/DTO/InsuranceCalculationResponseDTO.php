@@ -1,15 +1,32 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Model;
+namespace App\DTO;
 
-class InsuranceCalculationResult
+use OpenApi\Attributes as OA;
+
+#[OA\Schema(
+	schema: "InsuranceCalculationResponse",
+	description: "Ответ с результатом расчета страховки"
+)]
+class InsuranceCalculationResponseDTO
 {
+	#[OA\Property(description: "Общая стоимость в валюте страхования", example: 1.8)]
 	private float $totalCostInCurrency;
+
+	#[OA\Property(description: "Общая стоимость в рублях", example: 144.0)]
 	private float $totalCostInPreferredCurrency;
+
+	#[OA\Property(description: "Количество дней поездки", example: 3)]
 	private int $daysCount;
+
+	#[OA\Property(description: "Коэффициент 1 дня", example: 0.6)]
 	private float $dailyCoefficient;
+
+	#[OA\Property(description: "Курс валюты на сегодняшний день", example: 80.0)]
 	private float $exchangeRate;
+
+	#[OA\Property(description: "Страховая сумма", example: 30000)]
 	private int $insuranceAmount;
 
 	public function __construct(

@@ -27,12 +27,8 @@ class InsuranceCalculatorService {
 		'USD' => 70.0// for testing
 	];
 
-	/**
-	 * @param InsuranceCalculationRequest $request
-	 * @return InsuranceCalculationResult
-	 * @throws \Exception
-	 */
-	public function calculate(InsuranceCalculationRequest $request): InsuranceCalculationResult {
+	public function calculate(InsuranceCalculationRequest $request): InsuranceCalculationResult
+	{
 		$this->validateRequest($request);
 
 		$daysCount = $this->calculateDaysCount(
@@ -56,12 +52,8 @@ class InsuranceCalculatorService {
 		);
 	}
 
-	/**
-	 * @param InsuranceCalculationRequest $request
-	 * @return void
-	 * @throws \Exception
-	 */
-	private function validateRequest(InsuranceCalculationRequest $request): void {
+	private function validateRequest(InsuranceCalculationRequest $request): void
+	{
 		if (!array_key_exists($request->getInsuranceAmount(), self::DAILY_COEFFICIENTS)) {
 			throw new \InvalidArgumentException('Invalid insurance amount');
 		}
@@ -78,71 +70,39 @@ class InsuranceCalculatorService {
 		}
 	}
 
-	/**
-	 * @param \DateTimeInterface $startDate
-	 * @param \DateTimeInterface $endDate
-	 * @return int
-	 */
-	private function calculateDaysCount(\DateTimeInterface $startDate, \DateTimeInterface $endDate): int {
+	private function calculateDaysCount(\DateTimeInterface $startDate, \DateTimeInterface $endDate): int
+	{
 		$interval = $startDate->diff($endDate);
 		return $interval->days + 1;
 	}
 
-	/**
-	 * @param int $insuranceAmount
-	 * @return float
-	 */
-	private function getDailyCoefficient(int $insuranceAmount): float {
+	private function getDailyCoefficient(int $insuranceAmount): float
+	{
 		return self::DAILY_COEFFICIENTS[$insuranceAmount];
 	}
 
-	/**
-	 * @param string $currencyCode
-	 * @return float
-	 */
-	private function getExchangeRate(string $currencyCode): float {
+	private function getExchangeRate(string $currencyCode): float
+	{
 		return self::EXCHANGE_RATES[$currencyCode];
 	}
 
-	/**
-	 * For future
-	 *
-	 * @param int   $insuranceAmount
-	 * @param float $coefficient
-	 * @return void
-	 */
-	public function setDailyCoefficient(int $insuranceAmount, float $coefficient): void {
+	public function setDailyCoefficient(int $insuranceAmount, float $coefficient): void
+	{
 		self::$mutableDailyCoefficients[$insuranceAmount] = $coefficient;
 	}
 
-	/**
-	 * For future
-	 *
-	 * @param string $currencyCode
-	 * @param float  $rate
-	 * @return void
-	 */
-	public function setExchangeRate(string $currencyCode, float $rate): void {
+	public function setExchangeRate(string $currencyCode, float $rate): void
+	{
 		self::$mutableExchangeRates[$currencyCode] = $rate;
 	}
 
-	/**
-	 * For future
-	 *
-	 * @param int $insuranceAmount
-	 * @return float
-	 */
-	public function getMutableDailyCoefficient(int $insuranceAmount): float {
+	public function getMutableDailyCoefficient(int $insuranceAmount): float
+	{
 		return self::$mutableDailyCoefficients[$insuranceAmount] ?? self::DAILY_COEFFICIENTS[$insuranceAmount];
 	}
 
-	/**
-	 * For future
-	 *
-	 * @param string $currencyCode
-	 * @return float
-	 */
-	public function getMutableExchangeRate(string $currencyCode): float {
+	public function getMutableExchangeRate(string $currencyCode): float
+	{
 		return self::$mutableExchangeRates[$currencyCode] ?? self::EXCHANGE_RATES[$currencyCode];
 	}
 }

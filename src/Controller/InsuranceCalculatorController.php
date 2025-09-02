@@ -3,12 +3,16 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\DTO\InsuranceCalculationResponseDTO;
+use App\Model\ErrorResponse;
 use App\Model\InsuranceCalculationRequest;
 use App\Service\InsuranceCalculatorService;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -24,17 +28,57 @@ class InsuranceCalculatorController extends AbstractController
 	}
 
 	#[Route('/api/insurance/calculate', name: 'insurance_calculate', methods: ['POST'])]
+	#[OA\Post(
+		description: 'Расчет стоимости страховки для выезжающих за рубеж на основе страховой суммы, дат поездки и валюты',
+		summary: 'Расчет стоимости страховки',
+		tags: [ 'Insurance']
+	)]
+	#[OA\RequestBody(
+		description: 'Данные для расчета страховки',
+		required: true,
+		content: new OA\JsonContent(
+			ref: new Model(type: InsuranceCalculationRequest::class)
+		)
+	)]
+	#[OA\Response(
+		response: 200,
+		description: 'Успешный расчет',
+		content: new OA\JsonContent(
+			ref: new Model(type: InsuranceCalculationResponseDTO::class)
+		)
+	)]
+	#[OA\Response(
+		response: 400,
+		description: 'Неверные входные данные',
+		content: new OA\JsonContent(
+			ref: new Model(type: ErrorResponse::class)
+		)
+	)]
+	#[OA\Response(
+		response: 500,
+		description: 'Внутренняя ошибка сервера',
+		content: new OA\JsonContent(
+			ref: new Model(type: ErrorResponse::class)
+		)
+	)]
 	public function calculate(Request $request): JsonResponse
 	{
 		try {
-			$data = json_decode(
-				$request->getContent(),
-				TRUE,
-				512,
-				JSON_THROW_ON_ERROR);
+			$content = $request->getContent();
 
-			if (json_last_error() !== JSON_ERROR_NONE) {
+			if (empty($content)) {
+				return $this->json(['error' => 'Empty request body'], 400);
+			}
+
+			// Валидируем JSON
+			if (!$this->isValidJson($content)) {
 				return $this->json(['error' => 'Invalid JSON'], 400);
+			}
+
+			$data = json_decode($content, true);
+
+			if (!is_array($data)) {
+				return $this->json(['error' => 'JSON must be an object'], 400);
 			}
 
 			$constraints = new Assert\Collection(
@@ -57,7 +101,7 @@ class InsuranceCalculatorController extends AbstractController
 			}
 
 			$calculationRequest = new InsuranceCalculationRequest(
-				$data['insuranceAmount'],
+				(int) $data['insuranceAmount'],
 				$data['startDate'],
 				$data['endDate'],
 				strtoupper($data['currencyCode'])
@@ -72,5 +116,15 @@ class InsuranceCalculatorController extends AbstractController
 		} catch (\Exception $e) {
 			return $this->json(['error' => 'Internal server error'], 500);
 		}
+	}
+
+	private function isValidJson(string $string): bool
+	{
+		if (function_exists('json_validate')) {
+			return json_validate($string);
+		}
+
+		json_decode($string);
+		return json_last_error() === JSON_ERROR_NONE;
 	}
 }

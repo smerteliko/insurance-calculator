@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Model;
@@ -19,31 +18,23 @@ class InsuranceCalculationRequest
 		$this->currencyCode = $currencyCode;
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getInsuranceAmount(): int {
+	public function getInsuranceAmount(): int
+	{
 		return $this->insuranceAmount;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getStartDate(): string {
+	public function getStartDate(): string
+	{
 		return $this->startDate;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getEndDate(): string {
+	public function getEndDate(): string
+	{
 		return $this->endDate;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getCurrencyCode(): string {
+	public function getCurrencyCode(): string
+	{
 		return $this->currencyCode;
 	}
 }
