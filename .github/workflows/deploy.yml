@@ -1,0 +1,100 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, curl, intl, json, zip
+          coverage: none
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Copy environment file
+        run: cp .env.test .env
+
+      - name: Generate APP_SECRET
+        run: echo "APP_SECRET=$(openssl rand -hex 32)" >> .env
+
+      - name: Run tests
+        run: ./vendor/bin/phpunit
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, curl, intl, json, zip
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
+
+      - name: Copy environment file
+        run: cp .env.dist .env
+
+      - name: Generate APP_SECRET
+        run: echo "APP_SECRET=$(openssl rand -hex 32)" >> .env
+
+      - name: Setup production environment
+        run: |
+          echo "APP_ENV=prod" >> .env
+          echo "APP_DEBUG=0" >> .env
+
+      - name: Clear cache
+        run: php bin/console cache:clear --env=prod
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deployment
+          cp -r bin config public src templates translations var vendor .env composer.json composer.lock symfony.lock deployment/
+          cd deployment && zip -r ../insurance-calculator.zip .
+
+      - name: Upload deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: insurance-calculator
+          path: insurance-calculator.zip
+
+      - name: Show deployment info
+        run: |
+          echo "🚀 Application is ready for deployment!"
+          echo "📦 Download the artifact: insurance-calculator.zip"
+          echo "🌐 You can deploy this to any PHP hosting"
