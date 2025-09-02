@@ -1,27 +1,37 @@
 <?php
-
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace App\Tests\ControllerUnitT;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 
-class InsuranceCalculatorControllerTest extends WebTestCase {
-	public function testCalculateSuccess(): void {
+class InsuranceCalculatorControllerTest extends WebTestCase
+{
+	public function testCalculateSuccess(): void
+	{
 		$client = static::createClient();
 
-		$data = [ 'insuranceAmount' => 30000,
-		          'startDate'       => '2025-10-01',
-		          'endDate'         => '2025-10-03',
-		          'currencyCode'    => 'EUR' ];
+		$data = [
+			'insuranceAmount' => 30000,
+			'startDate' => '2025-10-01',
+			'endDate' => '2025-10-03',
+			'currencyCode' => 'EUR'
+		];
 
-		$client->jsonRequest('POST', '/api/insurance/calculate', $data);
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json'],
+			json_encode($data)
+		);
 
 		$this->assertResponseIsSuccessful();
 		$this->assertResponseHeaderSame('Content-Type', 'application/json');
 
-		$response = json_decode($client->getResponse()->getContent(), TRUE);
+		$response = json_decode($client->getResponse()->getContent(), true);
 
 		$this->assertArrayHasKey('totalCostInCurrency', $response);
 		$this->assertArrayHasKey('totalCostInPreferredCurrency', $response);
@@ -38,19 +48,29 @@ class InsuranceCalculatorControllerTest extends WebTestCase {
 		$this->assertEquals(30000, $response['insuranceAmount']);
 	}
 
-	public function testCalculateWithUSD(): void {
+	public function testCalculateWithUSD(): void
+	{
 		$client = static::createClient();
 
-		$data = [ 'insuranceAmount' => 50000,
-		          'startDate'       => '2025-10-01',
-		          'endDate'         => '2025-10-02',
-		          'currencyCode'    => 'USD' ];
+		$data = [
+			'insuranceAmount' => 50000,
+			'startDate' => '2025-10-01',
+			'endDate' => '2025-10-02',
+			'currencyCode' => 'USD'
+		];
 
-		$client->jsonRequest('POST', '/api/insurance/calculate', $data);
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json'],
+			json_encode($data)
+		);
 
 		$this->assertResponseIsSuccessful();
 
-		$response = json_decode($client->getResponse()->getContent(), TRUE);
+		$response = json_decode($client->getResponse()->getContent(), true);
 
 		$this->assertEquals(1.6, $response['totalCostInCurrency']);
 		$this->assertEquals(112.0, $response['totalCostInPreferredCurrency']);
@@ -58,65 +78,113 @@ class InsuranceCalculatorControllerTest extends WebTestCase {
 		$this->assertEquals(0.8, $response['dailyCoefficient']);
 	}
 
-	public function testInvalidInsuranceAmount(): void {
+	public function testInvalidInsuranceAmount(): void
+	{
 		$client = static::createClient();
 
-		$data = [ 'insuranceAmount' => 40000,
-		          'startDate'       => '2025-10-01',
-		          'endDate'         => '2025-10-03',
-		          'currencyCode'    => 'EUR' ];
-
-		$client->jsonRequest('POST', '/api/insurance/calculate', $data);
-
-		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-	}
-
-	public function testInvalidCurrency(): void {
-		$client = static::createClient();
-
-		$data = [ 'insuranceAmount' => 30000,
-		          'startDate'       => '2025-10-01',
-		          'endDate'         => '2025-10-03',
-		          'currencyCode'    => 'GBP' ];
-
-		$client->jsonRequest('POST', '/api/insurance/calculate', $data);
-
-		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-	}
-
-	public function testInvalidDateRange(): void {
-		$client = static::createClient();
-
-		$data = [ 'insuranceAmount' => 30000,
-		          'startDate'       => '2025-10-03',
-		          'endDate'         => '2025-10-01',
-		          'currencyCode'    => 'EUR' ];
-
-		$client->jsonRequest('POST', '/api/insurance/calculate', $data);
-
-		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-	}
-
-	public function testInvalidJson(): void {
-		$client = static::createClient();
-
-		$client->request('POST',
-		                 '/api/insurance/calculate',
-		                 [],
-		                 [],
-		                 [ 'CONTENT_TYPE' => 'application/json' ],
-		                 'invalid json');
-
-		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
-	}
-
-	public function testMissingRequiredFields(): void {
-		$client = static::createClient();
-
-		$data = [ 'insuranceAmount' => 30000, // missing other required fields
+		$data = [
+			'insuranceAmount' => 40000,
+			'startDate' => '2025-10-01',
+			'endDate' => '2025-10-03',
+			'currencyCode' => 'EUR'
 		];
 
-		$client->jsonRequest('POST', '/api/insurance/calculate', $data);
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json' ],
+			json_encode($data)
+		);
+
+		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+	}
+
+	public function testInvalidCurrency(): void
+	{
+		$client = static::createClient();
+
+		$data = [
+			'insuranceAmount' => 30000,
+			'startDate' => '2025-10-01',
+			'endDate' => '2025-10-03',
+			'currencyCode' => 'GBP'
+		];
+
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json'],
+			json_encode($data)
+		);
+
+		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+	}
+
+	public function testInvalidDateRange(): void
+	{
+		$client = static::createClient();
+
+		$data = [
+			'insuranceAmount' => 30000,
+			'startDate' => '2025-10-03',
+			'endDate' => '2025-10-01',
+			'currencyCode' => 'EUR'
+		];
+
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json'],
+			json_encode($data)
+		);
+
+		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+	}
+
+	public function testInvalidJson(): void
+	{
+		$client = static::createClient();
+
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json'],
+			'invalid json'
+		);
+
+		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+		$this->assertResponseHeaderSame('Content-Type', 'application/json');
+
+		$response = json_decode($client->getResponse()->getContent(), true);
+		$this->assertArrayHasKey('error', $response);
+		$this->assertStringContainsString('Invalid JSON', $response['error']);
+	}
+
+	public function testMissingRequiredFields(): void
+	{
+		$client = static::createClient();
+
+		$data = [
+			'insuranceAmount' => 30000,
+			// missing other required fields
+		];
+
+		$client->request(
+			'POST',
+			'/api/insurance/calculate',
+			[],
+			[],
+			['CONTENT_TYPE' => 'application/json'],
+			json_encode($data)
+		);
 
 		$this->assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
 	}
